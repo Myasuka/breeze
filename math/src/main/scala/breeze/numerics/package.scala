@@ -369,7 +369,9 @@ package object numerics {
     implicit def isNonfiniteImpl[@expand.args(Double, Float) T]: Impl[T, Boolean] = {
       new Impl[T, Boolean] {
         override def apply(v: T): Boolean = {
-          !java.lang.Double.isFinite(v)
+          // TODO: only in Java 8
+//          !java.lang.Double.isFinite(v)
+          !isFinite(v)
         }
       }
     }
@@ -381,7 +383,7 @@ package object numerics {
     implicit def isFiniteImpl[@expand.args(Double, Float) T]: Impl[T, Boolean] = {
       new Impl[T, Boolean] {
         override def apply(v: T): Boolean = {
-          java.lang.Double.isFinite(v)
+          m.abs(v) <= Double.MaxValue
         }
       }
     }

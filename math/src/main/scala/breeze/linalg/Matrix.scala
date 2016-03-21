@@ -15,6 +15,8 @@ package breeze.linalg
  limitations under the License.
 */
 
+import breeze.linalg.support.CanTraverseValues.ValuesVisitor
+
 import scala.{specialized=>spec}
 import breeze.storage.Zero
 import breeze.util.Terminal
@@ -129,11 +131,12 @@ trait Matrix[@spec(Double, Int, Float, Long) V] extends MatrixLike[V, Matrix[V]]
 
   def flatten(view: View=View.Prefer): Vector[V]
 
-  override def equals(p1: Any) = p1 match {
+  override def equals(p1: Any) : Boolean = p1 match {
     case x: Matrix[_] =>
       this.rows == x.rows && this.cols == x.cols &&
         keysIterator.forall(k => this(k) == x(k))
-    case _ => false
+    case _ =>
+      return false
   }
 
 }
@@ -176,6 +179,30 @@ object Matrix extends MatrixConstructors[Matrix]
     def repr: Matrix[V] = this
 
     def flatten(view: View) = Vector[V]()
+  }
+
+  implicit def canTraverseKeyValuePairs[V]: CanTraverseKeyValuePairs[Matrix[V], (Int, Int), V] = {
+    new CanTraverseKeyValuePairs[Matrix[V], (Int, Int), V] {
+      def isTraversableAgain(from: Matrix[V]): Boolean = true
+
+      /** Iterates all key-value pairs from the given collection. */
+      def traverse(from: Matrix[V], fn: CanTraverseKeyValuePairs.KeyValuePairsVisitor[(Int, Int), V]): Unit = {
+        from.iterator.foreach((fn.visit _).tupled)
+      }
+
+    }
+  }
+
+  implicit def canTraverseValues[V]: CanTraverseValues[Matrix[V], V] = {
+    new CanTraverseValues[Matrix[V], V] {
+      def isTraversableAgain(from: Matrix[V]): Boolean = true
+
+
+      /** Iterates all key-value pairs from the given collection. */
+      def traverse(from: Matrix[V], fn: ValuesVisitor[V]): Unit = {
+        from.valuesIterator.foreach(fn.visit)
+      }
+    }
   }
 }
 
@@ -238,6 +265,8 @@ trait MatrixConstructors[Mat[T]<:Matrix[T]] {
       rl.foreach(row, {(j, v) => rv(i,j) = v})
     }
   }
+
+
 
 
 

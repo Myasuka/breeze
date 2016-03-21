@@ -279,7 +279,6 @@ object Vector extends VectorConstructors[Vector] with VectorOps {
 
     def isTraversableAgain(from: Vector[V]): Boolean = true
 
-    /** Iterates all values from the given collection. */
     def traverse(from: Vector[V], fn: ValuesVisitor[V]): Unit = {
       for( v <- from.valuesIterator) {
         fn.visit(v)
@@ -287,6 +286,18 @@ object Vector extends VectorConstructors[Vector] with VectorOps {
     }
 
   }
+
+  implicit def canTraverseKeyValuePairs[V]: CanTraverseKeyValuePairs[Vector[V], Int, V] =
+
+    new CanTraverseKeyValuePairs[Vector[V], Int, V] {
+      def isTraversableAgain(from: Vector[V]): Boolean = true
+
+      def traverse(from: Vector[V], fn: CanTraverseKeyValuePairs.KeyValuePairsVisitor[Int, V]): Unit = {
+        for(i <- 0 until from.length)
+          fn.visit(i, from(i))
+      }
+
+    }
 
 
 
@@ -485,16 +496,33 @@ trait VectorOps { this: Vector.type =>
     }
   }
 
-  implicit def castUpdateOps[V1, V2, T, Op <: OpType](implicit v1ev: V1<:<Vector[T],
-                                                V2ev: V2<:<Vector[T],
-                                                op: UFunc.InPlaceImpl2[Op, Vector[T], Vector[T]]): InPlaceImpl2[Op, V1, V2] = {
+  implicit def castUpdateOps[V1, V2, T, Op](implicit v1ev: V1<:<Vector[T],
+                                            V2ev: V2<:<Vector[T],
+                                            op: UFunc.InPlaceImpl2[Op, Vector[T], Vector[T]]): InPlaceImpl2[Op, V1, V2] = {
     op.asInstanceOf[UFunc.InPlaceImpl2[Op, V1, V2]]
   }
 
-  implicit def castOps[V1, V2, T, Op <: OpType, VR](implicit v1ev: V1<:<Vector[T],
-                                                    V2ev: V2<:<Vector[T],
-                                                    op: UImpl2[Op, Vector[T], Vector[T], VR]): UImpl2[Op, V1, V2, VR] = {
+  implicit def castOps[V1, V2, T, Op, VR](implicit v1ev: V1<:<Vector[T],
+                                          V2ev: V2<:<Vector[T],
+                                          op: UImpl2[Op, Vector[T], Vector[T], VR]): UImpl2[Op, V1, V2, VR] = {
     op.asInstanceOf[UFunc.UImpl2[Op, V1, V2, VR]]
+  }
+
+//  implicit def castScalarOps[V1, T, Op, VR](implicit v1ev: V1<:<Vector[T],
+//                                            op: UImpl2[Op, Vector[T], T, VR]): UImpl2[Op, V1, T, VR] = {
+//    op.asInstanceOf[UFunc.UImpl2[Op, V1, T, VR]]
+//  }
+//
+//  implicit def castScalarLhsOps[V1, T, Op, VR](implicit v1ev: V1<:<Vector[T],
+//                                               op: UImpl2[Op, T, Vector[T], VR]): UImpl2[Op, T, V1, VR] = {
+//    op.asInstanceOf[UFunc.UImpl2[Op, T, V1, VR]]
+//  }
+
+  import shapeless._
+
+  implicit def castFunc[V1, T, Op, VR](implicit v1ev: V1<:<Vector[T], v1ne: V1 =:!= Vector[T],
+                                       op: UImpl[Op, Vector[T], VR]): UImpl[Op, V1, VR] = {
+    op.asInstanceOf[UFunc.UImpl[Op, V1, VR]]
   }
 
   @expand

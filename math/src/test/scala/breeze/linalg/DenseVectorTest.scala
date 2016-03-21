@@ -527,6 +527,10 @@ class DenseVectorTest extends FunSuite with Checkers {
     assert(all(isNonfinite, DenseVector[Double]())(all.reduceUFunc))
     assert(!any(isNonfinite, DenseVector[Double]()))
   }
+
+  test("#467 can slice transpose") {
+    assert(DenseVector(3, 4).t(0 until 1) == DenseVector(3).t)
+  }
 }
 
 /**
@@ -605,6 +609,8 @@ class DenseVectorOps_ComplexTest extends TensorSpaceTestBase[DenseVector[Complex
 @RunWith(classOf[JUnitRunner])
 class DenseVectorOps_FloatTest extends TensorSpaceTestBase[DenseVector[Float], Int, Float] {
  val space = DenseVector.space[Float]
+
+  override val TOL: Double = 1E-3
 
   val N = 30
   implicit def genTriple: Arbitrary[(DenseVector[Float], DenseVector[Float], DenseVector[Float])] = {
